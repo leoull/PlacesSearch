@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">placesSearch</string>
+    <string name="search_place">Search place</string>
 </resources>
