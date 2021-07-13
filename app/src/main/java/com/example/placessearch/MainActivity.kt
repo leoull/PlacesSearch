@@ -28,8 +28,12 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        initViews()
+    }
 
-        Places.initialize(this, "places_api_key") // TODO add api key here, and in AndroidManifest.xml
+    private fun initViews() {
+        // TODO(add api key here, and in AndroidManifest.xml)
+        Places.initialize(this, "places_api_key")
         val placesClient = Places.createClient(this)
         val token = AutocompleteSessionToken.newInstance()
         val req = FindAutocompletePredictionsRequest.builder()
@@ -51,38 +55,29 @@ class MainActivity : AppCompatActivity() {
         placesRcyView.apply {
             setHasFixedSize(true)
             layoutManager = LinearLayoutManager(context)
-            placesAdapter = PlaceAutoCompleteAdapter(placesClient, req, placesInput, placesRcyView)
+            placesAdapter = PlaceAutoCompleteAdapter(placesClient, req, placesInput)
             adapter = placesAdapter
-
         }
     }
 
     private val txtWatcher = object : TextWatcher {
-        override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-
-        }
-
-        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-        }
+        override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 
         override fun afterTextChanged(s: Editable?) {
             if (s.isNullOrBlank()) {
-                placesRcyView.visibility = View.GONE
-                clearResults.visibility = View.GONE
+                clearResults.visibility = View.GONE // hide clear button
             } else {
-                placesAdapter.filter.filter(s.toString())
-                placesRcyView.visibility = View.VISIBLE
-                clearResults.visibility = View.VISIBLE
+                placesAdapter.filter.filter(s.toString()) // filter the input query
+                clearResults.visibility = View.VISIBLE // show clear button
             }
         }
-
     }
-
     private val clkListener = View.OnClickListener {
         when (it.id) {
             R.id.clearImgView -> {
-                placesRcyView.visibility = View.GONE
-                placesInput.text.clear()
+                placesAdapter.clearPlacesResult() // remove address list
+                placesInput.text.clear() // clear input text
             }
         }
     }

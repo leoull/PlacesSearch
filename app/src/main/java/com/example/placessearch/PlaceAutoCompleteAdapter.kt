@@ -1,7 +1,5 @@
 package com.example.placessearch
 
-import android.graphics.Typeface
-import android.text.style.StyleSpan
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -25,27 +23,31 @@ class PlaceAutoCompleteAdapter(
     val placesClient: PlacesClient,
     val req: FindAutocompletePredictionsRequest.Builder,
     val searchEditTxt: EditText,
-    val placesRcyView: RecyclerView
 ) : RecyclerView.Adapter<PlaceAutoCompleteAdapter.ViewHolder>(), Filterable {
-    private var resultList: List<AutocompletePrediction>? = null
+    private var addressList: List<AutocompletePrediction>? = null
 
     override fun getFilter(): Filter {
         return object : Filter() {
             override fun performFiltering(constraint: CharSequence?): FilterResults {
                 val filterResults = FilterResults()
-                if (constraint != null) {
-                    val locReq = req.setQuery(constraint.toString()).build()
+                val inputAddress = constraint.toString()
+                // no need to query address if the input is already in addressList
+                if (constraint != null && !alreadyQueried(inputAddress)) {
+                    val placeQuery = req.setQuery(inputAddress).build()
 
-                    placesClient.findAutocompletePredictions(locReq)
+                    placesClient.findAutocompletePredictions(placeQuery)
                         .addOnSuccessListener {
-                            resultList = it.autocompletePredictions
+                            addressList = it.autocompletePredictions
                             notifyDataSetChanged()
-                            filterResults.values = resultList
-                            filterResults.count = resultList?.size!!
+                            filterResults.values = addressList
+                            filterResults.count = addressList?.size!!
                         }
                         .addOnFailureListener {
+                            // you can display error message to the user here
                             Log.e(TAG, "Place not found: " + (it as ApiException).statusCode)
                         }
+                } else if (constraint.toString().equals(searchEditTxt.text)) {
+                    clearPlacesResult()
                 }
                 return filterResults
             }
@@ -58,25 +60,45 @@ class PlaceAutoCompleteAdapter(
         }
     }
 
+    /**
+     * check if the resultsList contains the input address
+     */
+    private fun alreadyQueried(currentAddress: String): Boolean {
+        addressList?.forEach {
+            if (currentAddress == it.getFullText(null).toString()) {
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
+     * delete addressList. This removes address result list if one address is chosen/clicked
+     */
+    fun clearPlacesResult() {
+        addressList = null
+        notifyDataSetChanged()
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.place_cell, parent, false)
         return ViewHolder(v)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.place.text = resultList?.get(position)?.getFullText(StyleSpan(Typeface.NORMAL))
+        holder.address.text = addressList?.get(position)?.getFullText(null)
     }
 
-    override fun getItemCount() = if (resultList.isNullOrEmpty()) 0 else resultList!!.size
+    override fun getItemCount() = if (addressList.isNullOrEmpty()) 0 else addressList!!.size
 
     inner class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
-        val place: TextView = v.findViewById(R.id.address)
+        val address: TextView = v.findViewById(R.id.address)
 
         init {
-            place.setOnClickListener {  //  click listener for the ViewHolder's View.
-                searchEditTxt.setText(place.text)
-                searchEditTxt.clearFocus()
-                placesRcyView.visibility = View.GONE
+            address.setOnClickListener {  //  click listener for the ViewHolder's View.
+                searchEditTxt.setText(address.text) // set the selected address to inputField
+                searchEditTxt.clearFocus() // this helps to hide soft keyboard
+                clearPlacesResult() // address is chosen so remove the address list
             }
         }
     }
