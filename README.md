@@ -1,8 +1,8 @@
-# custom Place Autocomplete
+# custom places_autocomplete_search
 
 ![](/app/src/main/res/drawable/app_screen_shot.png)
 
 
 ```
-don't forget to add the places_api_key in AndroidManifest.xml and in MainActivity.kt
+don't forget to add the places_api_key in AndroidManifest.xml and in MainActivity.kt :)
 ```
