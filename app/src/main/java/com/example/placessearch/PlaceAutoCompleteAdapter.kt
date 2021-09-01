@@ -27,9 +27,7 @@ class PlaceAutoCompleteAdapter(
     private var addressList: List<AutocompletePrediction>? = null
     private var lastSelectedAddr = ""
 
-    override fun getFilter(): Filter {
-        return filter
-    }
+    override fun getFilter() = filter
 
     private val filter = object : Filter() {
         override fun performFiltering(constraint: CharSequence?): FilterResults {
