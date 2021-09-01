@@ -17,7 +17,7 @@ import com.google.android.libraries.places.api.net.PlacesClient
 /**
  * @author leoul.
  * PlaceAutoCompleteAdapter.
- * Refere https://developers.google.com/maps/documentation/places/android-sdk/client-migration for detail
+ * more info: https://developers.google.com/maps/documentation/places/android-sdk/client-migration for detail
  */
 class PlaceAutoCompleteAdapter(
     val placesClient: PlacesClient,
@@ -25,51 +25,40 @@ class PlaceAutoCompleteAdapter(
     val searchEditTxt: EditText,
 ) : RecyclerView.Adapter<PlaceAutoCompleteAdapter.ViewHolder>(), Filterable {
     private var addressList: List<AutocompletePrediction>? = null
+    private var lastSelectedAddr = ""
 
     override fun getFilter(): Filter {
-        return object : Filter() {
-            override fun performFiltering(constraint: CharSequence?): FilterResults {
-                val filterResults = FilterResults()
-                val inputAddress = constraint.toString()
-                // no need to query address if the input is already in addressList
-                if (constraint != null && !alreadyQueried(inputAddress)) {
-                    val placeQuery = req.setQuery(inputAddress).build()
-
-                    placesClient.findAutocompletePredictions(placeQuery)
-                        .addOnSuccessListener {
-                            addressList = it.autocompletePredictions
-                            notifyDataSetChanged()
-                            filterResults.values = addressList
-                            filterResults.count = addressList?.size!!
-                        }
-                        .addOnFailureListener {
-                            // you can display error message to the user here
-                            Log.e(TAG, "Place not found: " + (it as ApiException).statusCode)
-                        }
-                } else if (constraint.toString().equals(searchEditTxt.text)) {
-                    clearPlacesResult()
-                }
-                return filterResults
-            }
-
-            override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-                if (results != null && results.count > 0) {
-                    notifyDataSetChanged()
-                }
-            }
-        }
+        return filter
     }
 
-    /**
-     * check if the resultsList contains the input address
-     */
-    private fun alreadyQueried(currentAddress: String): Boolean {
-        addressList?.forEach {
-            if (currentAddress == it.getFullText(null).toString()) {
-                return true
+    private val filter = object : Filter() {
+        override fun performFiltering(constraint: CharSequence?): FilterResults {
+            val filterResults = FilterResults()
+            val inputAddr = constraint.toString()
+            // no need to query address if the input is already in addressList
+            if (inputAddr != lastSelectedAddr) {
+                val placeQuery = req.setQuery(inputAddr).build()
+
+                placesClient.findAutocompletePredictions(placeQuery)
+                    .addOnSuccessListener {
+                        addressList = it.autocompletePredictions
+                        notifyDataSetChanged()
+                        filterResults.values = addressList
+                        filterResults.count = addressList?.size!!
+                    }
+                    .addOnFailureListener {
+                        // you can display error message to the user here
+                        Log.e(TAG, "Place not found: " + (it as ApiException).statusCode)
+                    }
+            }
+            return filterResults
+        }
+
+        override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
+            if (results != null && results.count > 0) {
+                notifyDataSetChanged()
             }
         }
-        return false
     }
 
     /**
@@ -96,7 +85,12 @@ class PlaceAutoCompleteAdapter(
 
         init {
             address.setOnClickListener {  //  click listener for the ViewHolder's View.
-                searchEditTxt.setText(address.text) // set the selected address to inputField
+                val addr = address.text.toString()
+                // Note: updating lastSelectedAddr before setting searchEditTxt value is necessary
+                // so that the TextWatcher is called after updating the lastSelectedAddr so
+                // that the exact address is not queried again
+                lastSelectedAddr = addr
+                searchEditTxt.setText(addr) // set the selected address to inputField
                 searchEditTxt.clearFocus() // this helps to hide soft keyboard
                 clearPlacesResult() // address is chosen so remove the address list
             }

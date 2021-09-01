@@ -7,5 +7,5 @@
 
 
 ```
-don't forget to add the places_api_key in AndroidManifest.xml and in MainActivity.kt :)
+don't forget to add your places_api_key in MainActivity.kt :)
 ```
