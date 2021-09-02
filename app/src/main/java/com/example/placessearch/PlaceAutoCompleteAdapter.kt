@@ -88,9 +88,9 @@ class PlaceAutoCompleteAdapter(
                 // so that the TextWatcher is called after updating the lastSelectedAddr so
                 // that the exact address is not queried again
                 lastSelectedAddr = addr
-                searchEditTxt.setText(addr) // set the selected address to inputField
                 searchEditTxt.clearFocus() // this helps to hide soft keyboard
                 clearPlacesResult() // address is chosen so remove the address list
+                searchEditTxt.setText(addr) // set the selected address to inputField
             }
         }
     }

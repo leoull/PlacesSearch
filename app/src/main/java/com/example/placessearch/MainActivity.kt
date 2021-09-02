@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        // TODO(add api key here, and in AndroidManifest.xml)
+        TODO("add api key here")
         Places.initialize(this, "places_api_key")
         val placesClient = Places.createClient(this)
         val token = AutocompleteSessionToken.newInstance()
